@@ -8,6 +8,7 @@ import {
   Award,
   Bot,
   CalendarCheck,
+  Check,
   CheckCircle2,
   IndianRupee,
   MessageSquareText,
@@ -39,10 +40,56 @@ const RECENCY_OPTIONS: RecencyOption[] = [
   { id: "over30d", label: "Over 30 days ago", delta: -30 },
 ];
 
+const WEEKLY_MOMENTUM = [
+  { week: "W1", actions: 6, label: "Joined 2 communities" },
+  { week: "W2", actions: 9, label: "Posted 3 discussions" },
+  { week: "W3", actions: 7, label: "Voted in 2 polls" },
+  { week: "W4", actions: 12, label: "Attended chapter meetup" },
+  { week: "W5", actions: 11, label: "Referred 1 alumni" },
+  { week: "W6", actions: 15, label: "Bought Early Bird ticket" },
+  { week: "W7", actions: 14, label: "Joined AI Innovators" },
+  { week: "W8", actions: 18, label: "Checked in at Summit" },
+];
+
+function SemiGauge({ score, strokeColor }: { score: number; strokeColor: string }) {
+  const radius = 56;
+  const arcLength = Math.PI * radius;
+  const offset = arcLength - (score / 100) * arcLength;
+
+  return (
+    <div className="relative mx-auto flex w-44 flex-col items-center">
+      <svg className="h-24 w-44 overflow-visible" viewBox="0 0 140 76" aria-hidden="true">
+        <path
+          d="M 14 68 A 56 56 0 0 1 126 68"
+          fill="none"
+          stroke="#e1e1df"
+          strokeWidth="10"
+          strokeLinecap="round"
+        />
+        <path
+          d="M 14 68 A 56 56 0 0 1 126 68"
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={arcLength}
+          strokeDashoffset={offset}
+          className="transition-all duration-500 ease-out"
+        />
+      </svg>
+      <div className="-mt-9 text-center">
+        <span className="text-4xl font-black tracking-tight text-black">{score}</span>
+        <span className="ml-1 text-sm font-semibold text-zinc-400">/ 100</span>
+      </div>
+    </div>
+  );
+}
+
 export function SuperpowersAndHealthScore() {
   const [recencyId, setRecencyId] = useState<string>("7d");
   const [recentActions, setRecentActions] = useState<number>(14);
   const [hasCommitment, setHasCommitment] = useState<boolean>(true);
+  const [hoveredWeek, setHoveredWeek] = useState<number>(7);
 
   const recencyDelta = RECENCY_OPTIONS.find((r) => r.id === recencyId)?.delta ?? 30;
   const activityDelta = Math.min(20, recentActions);
@@ -56,23 +103,24 @@ export function SuperpowersAndHealthScore() {
           label: "Thriving (80–100)",
           desc: "Super active, frequently joins events, posts regularly, and spends with your community.",
           badgeClass: "bg-blue-50 text-blue-700 border-blue-200",
-          barClass: "bg-blue-600",
+          strokeColor: "#2563eb",
         }
       : healthScore >= 50
       ? {
           label: "Healthy (50–79)",
           desc: "Regularly logs in and reads content, and attends occasional events.",
           badgeClass: "bg-sky-50 text-sky-700 border-sky-200",
-          barClass: "bg-sky-500",
+          strokeColor: "#0ea5e9",
         }
       : {
           label: "At Risk (Below 40)",
           desc: "Has stopped opening emails and hasn't visited in over 2 weeks.",
           badgeClass: "bg-orange-50 text-orange-700 border-orange-200",
-          barClass: "bg-orange-500",
+          strokeColor: "#f97316",
         };
 
   const featuredMember = SAMPLE_MEMBERS[0];
+  const activeWeekData = WEEKLY_MOMENTUM[hoveredWeek] ?? WEEKLY_MOMENTUM[7];
 
   return (
     <Section
@@ -84,7 +132,7 @@ export function SuperpowersAndHealthScore() {
     >
       <FeatureGrid items={SUPERPOWERS} columns={4} />
 
-      {/* LiveRamp-style Alternating Module 1: Text Left, Interactive Health Score Right */}
+      {/* LiveRamp-style Alternating Module 1: Text Left, Interactive Health Score Gauge Right */}
       <div className="mt-14 grid items-center gap-10 rounded-2xl border border-[#e1e1df] bg-white p-6 sm:p-10 lg:grid-cols-2 lg:gap-14">
         <div>
           <div className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">
@@ -128,29 +176,21 @@ export function SuperpowersAndHealthScore() {
           </div>
         </div>
 
-        {/* Interactive Score Card */}
+        {/* Interactive Score Card with SVG Arc Gauge */}
         <div className="rounded-2xl border border-[#e1e1df] bg-[#f7f7f5] p-5 sm:p-6">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
               Live Health Score Simulator
             </span>
-            <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${tier.badgeClass}`}>
+            <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold transition-colors ${tier.badgeClass}`}>
               {tier.label}
             </span>
           </div>
 
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-5xl font-black tracking-tight text-black">{healthScore}</span>
-            <span className="text-base font-semibold text-zinc-400">/ 100</span>
+          <div className="mt-5">
+            <SemiGauge score={healthScore} strokeColor={tier.strokeColor} />
+            <p className="mt-3 text-center text-xs text-zinc-600">{tier.desc}</p>
           </div>
-
-          <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-zinc-200">
-            <div
-              className={`h-full rounded-full transition-all duration-300 ${tier.barClass}`}
-              style={{ width: `${healthScore}%` }}
-            />
-          </div>
-          <p className="mt-2.5 text-xs text-zinc-600">{tier.desc}</p>
 
           <div className="mt-5 space-y-4 border-t border-[#e1e1df] pt-4">
             <div>
@@ -168,9 +208,9 @@ export function SuperpowersAndHealthScore() {
                       key={opt.id}
                       type="button"
                       onClick={() => setRecencyId(opt.id)}
-                      className={`rounded-lg border px-2.5 py-2 text-left text-[11px] font-semibold transition-all cursor-pointer ${
+                      className={`rounded-lg border px-2.5 py-2 text-left text-[11px] font-semibold transition-all duration-150 cursor-pointer active:scale-95 ${
                         active
-                          ? "border-black bg-black text-white"
+                          ? "border-black bg-black text-white shadow-xs"
                           : "border-[#e1e1df] bg-white text-zinc-700 hover:border-zinc-400"
                       }`}
                     >
@@ -204,7 +244,7 @@ export function SuperpowersAndHealthScore() {
               <button
                 type="button"
                 onClick={() => setHasCommitment((v) => !v)}
-                className={`rounded-full px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                className={`rounded-full px-3 py-1 text-xs font-bold transition-all duration-150 cursor-pointer active:scale-95 ${
                   hasCommitment
                     ? "bg-black text-white hover:bg-zinc-800"
                     : "bg-zinc-200 text-zinc-700 hover:bg-zinc-300"
@@ -217,12 +257,17 @@ export function SuperpowersAndHealthScore() {
         </div>
       </div>
 
-      {/* LiveRamp-style Alternating Module 2: Visual Left, Text Right */}
+      {/* LiveRamp-style Alternating Module 2: Visual Left with Momentum Chart, Text Right */}
       <div className="mt-8 grid items-center gap-10 rounded-2xl border border-[#e1e1df] bg-white p-6 sm:p-10 lg:grid-cols-2 lg:gap-14">
         {/* Visual Left */}
         <div className="order-2 rounded-2xl border border-[#e1e1df] bg-[#f7f7f5] p-5 sm:p-6 lg:order-1">
-          <div className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-            Unified Lifetime Impact · {featuredMember.name}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+              Unified Lifetime Impact · {featuredMember.name}
+            </span>
+            <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-700">
+              8-Week Momentum
+            </span>
           </div>
 
           <div className="mt-4 grid grid-cols-5 divide-x divide-[#e1e1df] rounded-xl border border-[#e1e1df] bg-white text-center">
@@ -233,14 +278,61 @@ export function SuperpowersAndHealthScore() {
               { icon: MessageSquareText, label: "Posts", value: String(featuredMember.contentCreated) },
               { icon: Award, label: "Points", value: featuredMember.pointsEarned },
             ].map(({ icon: Icon, label, value }) => (
-              <div key={label} className="px-1.5 py-3">
-                <Icon className="mx-auto h-3.5 w-3.5 text-blue-600" />
+              <div key={label} className="group/tile px-1.5 py-3 transition-colors hover:bg-blue-50/40">
+                <Icon className="mx-auto h-3.5 w-3.5 text-blue-600 transition-transform group-hover/tile:scale-110" />
                 <div className="mt-1 truncate text-xs font-extrabold text-black sm:text-sm">
                   {value}
                 </div>
                 <div className="text-[10px] text-zinc-500">{label}</div>
               </div>
             ))}
+          </div>
+
+          {/* Interactive 8-Week Community Activity Bar Graphic */}
+          <div className="mt-4 rounded-xl border border-[#e1e1df] bg-white p-4">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-bold uppercase tracking-wider text-zinc-400">
+                Community Activity Momentum
+              </span>
+              <span className="font-semibold text-blue-700">
+                {activeWeekData.week}: {activeWeekData.actions} actions · {activeWeekData.label}
+              </span>
+            </div>
+
+            <div className="mt-4 flex h-20 items-end gap-2">
+              {WEEKLY_MOMENTUM.map((w, idx) => {
+                const isActive = idx === hoveredWeek;
+                const heightPct = Math.round((w.actions / 18) * 100);
+                return (
+                  <button
+                    key={w.week}
+                    type="button"
+                    onMouseEnter={() => setHoveredWeek(idx)}
+                    onClick={() => setHoveredWeek(idx)}
+                    className="group/bar flex flex-1 flex-col items-center gap-1.5 cursor-pointer"
+                    aria-label={`${w.week}: ${w.actions} actions`}
+                  >
+                    <div className="flex h-14 w-full items-end overflow-hidden rounded-md bg-[#f7f7f5]">
+                      <div
+                        className={`w-full rounded-t-md transition-all duration-300 ${
+                          isActive
+                            ? "bg-blue-600"
+                            : "bg-blue-200 group-hover/bar:bg-blue-400"
+                        }`}
+                        style={{ height: `${heightPct}%` }}
+                      />
+                    </div>
+                    <span
+                      className={`text-[10px] font-semibold ${
+                        isActive ? "text-black" : "text-zinc-400"
+                      }`}
+                    >
+                      {w.week}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="mt-4 rounded-xl border border-[#e1e1df] bg-white p-4">
@@ -251,10 +343,10 @@ export function SuperpowersAndHealthScore() {
               {featuredMember.timeline.map((item) => (
                 <div
                   key={item.text}
-                  className="flex items-center justify-between gap-3 border-b border-zinc-100 pb-2 text-xs last:border-none last:pb-0"
+                  className="group/row flex items-center justify-between gap-3 border-b border-zinc-100 pb-2 text-xs last:border-none last:pb-0"
                 >
                   <div className="flex min-w-0 items-center gap-2 text-zinc-800">
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-blue-600" />
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-blue-600 transition-transform group-hover/row:scale-125" />
                     <span className="truncate font-medium">{item.text}</span>
                   </div>
                   <span className="shrink-0 text-[11px] text-zinc-400">{item.time}</span>
@@ -273,13 +365,19 @@ export function SuperpowersAndHealthScore() {
             Every rupee, event, post, and login in one chronological feed
           </h3>
           <p className="mt-3 text-base leading-relaxed text-zinc-600">
-            See every member&apos;s exact lifetime contribution alongside a live feed of everything they do across your web portal and mobile apps.
+            See every member&apos;s exact lifetime contribution alongside weekly community momentum and a live feed across your web portal and mobile apps.
           </p>
 
           <div className="mt-6 grid grid-cols-1 gap-3 border-t border-[#e1e1df] pt-5 sm:grid-cols-2">
             {LIFETIME_METRICS.map((m) => (
-              <div key={m.label} className="flex items-start gap-2.5">
-                <FeatureIcon name={m.icon} className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+              <div
+                key={m.label}
+                className="group flex items-start gap-2.5 rounded-xl p-2 transition-colors hover:bg-[#f7f7f5]"
+              >
+                <FeatureIcon
+                  name={m.icon}
+                  className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 transition-transform group-hover:scale-110"
+                />
                 <div>
                   <div className="text-xs font-bold text-black">{m.label}</div>
                   <div className="text-xs text-zinc-500">{m.detail}</div>
@@ -303,6 +401,16 @@ const CATEGORY_TONE: Record<MemberCategory["tone"], string> = {
   rose: "bg-rose-50 text-rose-800 border-rose-200",
 };
 
+const SEGMENT_SHARE: Record<string, { pct: number; color: string }> = {
+  champions: { pct: 12, color: "bg-blue-700" },
+  loyal: { pct: 22, color: "bg-blue-600" },
+  potential: { pct: 19, color: "bg-blue-500" },
+  new: { pct: 14, color: "bg-sky-400" },
+  "at-risk": { pct: 15, color: "bg-amber-400" },
+  hibernating: { pct: 11, color: "bg-zinc-400" },
+  lost: { pct: 7, color: "bg-rose-400" },
+};
+
 export function RfmSegmentsSection() {
   const [selectedId, setSelectedId] = useState<string>(MEMBER_CATEGORIES[0].id);
   const active =
@@ -315,6 +423,37 @@ export function RfmSegmentsSection() {
       title="7 easy-to-understand member segments."
       intro="Customer 360 automatically organizes every member by how recently they visited, how often they engage, and how much they spend — paired with the exact next step to take."
     >
+      {/* Interactive Community Distribution Graphic */}
+      <div className="mb-6 rounded-2xl border border-[#e1e1df] bg-[#f7f7f5] p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className="font-bold uppercase tracking-wider text-zinc-500">
+            / Community Lifecycle Breakdown (Click any slice)
+          </span>
+          <span className="font-semibold text-blue-700">
+            Selected: {active.emoji} {active.label} ({SEGMENT_SHARE[active.id]?.pct ?? 10}% of community)
+          </span>
+        </div>
+
+        <div className="mt-3 flex h-4 w-full overflow-hidden rounded-full border border-[#e1e1df] bg-white p-0.5">
+          {MEMBER_CATEGORIES.map((seg) => {
+            const share = SEGMENT_SHARE[seg.id] ?? { pct: 10, color: "bg-blue-500" };
+            const isSelected = seg.id === active.id;
+            return (
+              <button
+                key={seg.id}
+                type="button"
+                onClick={() => setSelectedId(seg.id)}
+                title={`${seg.label}: ${share.pct}%`}
+                style={{ width: `${share.pct}%` }}
+                className={`h-full transition-all duration-300 cursor-pointer first:rounded-l-full last:rounded-r-full ${share.color} ${
+                  isSelected ? "scale-y-110 ring-2 ring-black ring-offset-1" : "opacity-75 hover:opacity-100"
+                }`}
+              />
+            );
+          })}
+        </div>
+      </div>
+
       {/* Interactive Category Pills */}
       <div className="flex flex-wrap gap-2">
         {MEMBER_CATEGORIES.map((seg) => {
@@ -324,9 +463,9 @@ export function RfmSegmentsSection() {
               key={seg.id}
               type="button"
               onClick={() => setSelectedId(seg.id)}
-              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-all cursor-pointer sm:text-sm ${
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-95 sm:text-sm ${
                 isSelected
-                  ? "border-black bg-black text-white"
+                  ? "border-black bg-black text-white shadow-sm"
                   : "border-[#e1e1df] bg-white text-zinc-700 hover:border-black"
               }`}
             >
@@ -338,7 +477,10 @@ export function RfmSegmentsSection() {
       </div>
 
       {/* Selected Category Spotlight */}
-      <div className="mt-6 rounded-2xl border border-[#e1e1df] bg-[#f7f7f5] p-6 sm:p-8">
+      <div
+        key={active.id}
+        className="animate-fade-up-sm mt-6 rounded-2xl border border-[#e1e1df] bg-[#f7f7f5] p-6 sm:p-8"
+      >
         <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr] lg:items-center">
           <div>
             <div className="flex flex-wrap items-center gap-2.5">
@@ -419,10 +561,41 @@ export function RfmSegmentsSection() {
   );
 }
 
+function FunnelMiniGraphic() {
+  const stages = [
+    { label: "Event Page Views", count: "4,820", width: "100%", color: "bg-blue-600" },
+    { label: "Started Checkout", count: "1,190", width: "56%", color: "bg-blue-500" },
+    { label: "Tickets Purchased", count: "742", width: "36%", color: "bg-sky-500" },
+  ];
+  return (
+    <div className="mt-4 space-y-2 rounded-xl border border-[#e1e1df] bg-[#f7f7f5] p-3.5">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+        Conversion Funnel Visual
+      </div>
+      {stages.map((st) => (
+        <div key={st.label} className="space-y-1">
+          <div className="flex justify-between text-[11px] font-semibold text-zinc-700">
+            <span>{st.label}</span>
+            <span className="text-black">{st.count}</span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-white">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${st.color}`}
+              style={{ width: st.width }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AiCopilotSection() {
   const [selectedPromptId, setSelectedPromptId] = useState<string>(COPILOT_PROMPTS[0].id);
+  const [executedMap, setExecutedMap] = useState<Record<string, boolean>>({});
   const current =
     COPILOT_PROMPTS.find((p) => p.id === selectedPromptId) ?? COPILOT_PROMPTS[0];
+  const isExecuted = Boolean(executedMap[current.id]);
 
   return (
     <Section
@@ -452,7 +625,7 @@ export function AiCopilotSection() {
             </p>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+              <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 transition-colors hover:border-blue-300">
                 <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-blue-800">
                   <CheckCircle2 className="h-3.5 w-3.5" /> Key Strengths
                 </div>
@@ -463,7 +636,7 @@ export function AiCopilotSection() {
                 </ul>
               </div>
 
-              <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4">
+              <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 transition-colors hover:border-amber-300">
                 <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-800">
                   <AlertTriangle className="h-3.5 w-3.5" /> Watchouts
                 </div>
@@ -496,16 +669,21 @@ export function AiCopilotSection() {
         {/* Right: Interactive Plain-English AI Copilot Console */}
         <div className="flex flex-col justify-between rounded-2xl border border-[#e1e1df] bg-[#f7f7f5] p-6 sm:p-8">
           <div>
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
-                <Bot className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-sm font-bold text-black">AI Copilot</div>
-                <div className="text-[11px] text-zinc-500">
-                  Click any question below to preview the instant answer
+            <div className="flex items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-black">AI Copilot</div>
+                  <div className="text-[11px] text-zinc-500">
+                    Click any question below to preview the instant answer
+                  </div>
                 </div>
               </div>
+              <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-blue-700 ring-1 ring-[#e1e1df]">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-600" /> Ready
+              </span>
             </div>
 
             {/* Prompt Selector Buttons */}
@@ -517,15 +695,15 @@ export function AiCopilotSection() {
                     key={item.id}
                     type="button"
                     onClick={() => setSelectedPromptId(item.id)}
-                    className={`flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-xs font-semibold transition-all cursor-pointer ${
+                    className={`group flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.99] ${
                       active
-                        ? "border-black bg-black text-white"
+                        ? "border-black bg-black text-white shadow-xs"
                         : "border-[#e1e1df] bg-white text-zinc-700 hover:border-black"
                     }`}
                   >
                     <span className="truncate">&ldquo;{item.prompt}&rdquo;</span>
                     <Send
-                      className={`h-3.5 w-3.5 shrink-0 ${
+                      className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 ${
                         active ? "text-blue-400" : "text-zinc-400"
                       }`}
                     />
@@ -535,7 +713,10 @@ export function AiCopilotSection() {
             </div>
 
             {/* Live Copilot Response Card */}
-            <div className="mt-5 rounded-2xl border border-[#e1e1df] bg-white p-5">
+            <div
+              key={current.id}
+              className="animate-fade-up-sm mt-5 rounded-2xl border border-[#e1e1df] bg-white p-5"
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-700">
                   {current.badge}
@@ -553,9 +734,32 @@ export function AiCopilotSection() {
                 ))}
               </div>
 
-              <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2.5 text-xs text-zinc-800">
-                <span className="font-bold text-blue-700">Recommended Action: </span>
-                {current.recommendation}
+              {current.id === "funnel" && <FunnelMiniGraphic />}
+
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2.5 text-xs text-zinc-800">
+                <div className="min-w-0 flex-1">
+                  <span className="font-bold text-blue-700">Recommended Action: </span>
+                  {current.recommendation}
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExecutedMap((prev) => ({ ...prev, [current.id]: !prev[current.id] }))
+                  }
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold transition-all cursor-pointer active:scale-95 ${
+                    isExecuted
+                      ? "bg-blue-600 text-white"
+                      : "bg-black text-white hover:bg-zinc-800"
+                  }`}
+                >
+                  {isExecuted ? (
+                    <>
+                      <Check className="h-3 w-3" /> Queued
+                    </>
+                  ) : (
+                    "Run Action"
+                  )}
+                </button>
               </div>
             </div>
           </div>
@@ -580,20 +784,21 @@ export function BlueBrandBanner() {
               One digital passport for every member, student, or alumni.
             </h2>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-blue-100 sm:text-lg">
-              Spot churn early, celebrate your top advocates, and grow event ticket sales — without spreadsheets or guesswork.
+              Spot churn early, celebrate your top community advocates, and grow event ticket sales — without spreadsheets or guesswork.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="#demo"
-                className="inline-flex items-center gap-2 rounded-full bg-black px-7 py-3.5 text-sm font-semibold text-white transition-all hover:bg-zinc-800 active:scale-95"
+                className="group inline-flex items-center gap-2 rounded-full bg-black px-7 py-3.5 text-sm font-semibold text-white transition-all hover:bg-zinc-800 active:scale-95"
               >
-                Book a Demo <ArrowRight className="h-4 w-4" />
+                Book a Demo{" "}
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
               </Link>
               <Link
                 href={TRIAL_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+                className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-semibold text-white transition-all hover:bg-white/20 active:scale-95"
               >
                 Start Free Trial
               </Link>
@@ -602,11 +807,14 @@ export function BlueBrandBanner() {
 
           <div className="grid grid-cols-1 divide-y divide-white/20 rounded-2xl border border-white/20 bg-blue-700/50 backdrop-blur">
             {[
-              { stat: "0–100", label: "Live Engagement Health Score on every member" },
+              { stat: "0–100", label: "Live Engagement Health Score on every community member" },
               { stat: "7 Tiers", label: "Automatic RFM segments with ready-to-run actions" },
-              { stat: "360°", label: "Unified spend, events, posts, points & timeline" },
+              { stat: "360°", label: "Unified spend, events, communities, points & timeline" },
             ].map((item) => (
-              <div key={item.stat} className="flex items-center gap-5 p-5 sm:p-6">
+              <div
+                key={item.stat}
+                className="flex items-center gap-5 p-5 transition-colors hover:bg-white/5 sm:p-6"
+              >
                 <div className="w-24 shrink-0 text-2xl font-black text-white sm:text-3xl">
                   {item.stat}
                 </div>

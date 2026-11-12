@@ -7,9 +7,9 @@ export function BusinessUseCases() {
     <Section
       id="use-cases"
       tone="warm"
-      eyebrow="Real-World Community Use Cases"
-      title="Turn community signals into retention and revenue."
-      intro="Customer 360 helps community, alumni, and membership teams act early — keeping members engaged, recognizing chapter ambassadors, and filling more event seats."
+      eyebrow="Real-World Business Use Cases"
+      title="Turn member signals into retention and revenue."
+      intro="Customer 360 helps community teams act early — keeping members engaged, recognizing top advocates, and filling more event seats."
     >
       <div className="grid grid-cols-1 divide-y divide-[#e1e1df] overflow-hidden rounded-2xl border border-[#e1e1df] bg-white lg:grid-cols-3 lg:divide-x lg:divide-y-0">
         {BUSINESS_USE_CASES.map((item) => (
@@ -52,9 +52,9 @@ export function DigitalFootprintSection() {
     <Section
       id="digital-footprint"
       tone="warm"
-      eyebrow="Community Activity & Reach"
+      eyebrow="Digital Activity & Reach"
       title="See how members discover and browse your community."
-      intro="Understand every member's live presence across your community portal and mobile app — from the referral or campaign that brought them in to the groups, discussions, and events they visit most."
+      intro="Understand every member's live presence, the campaigns that brought them in, the devices they prefer, and the pages they visit most."
     >
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* Card 1: Live Presence & Acquisition */}
@@ -86,10 +86,10 @@ export function DigitalFootprintSection() {
             </div>
             <dl className="mt-3 space-y-2 text-xs">
               {[
-                { k: "First Visit Channel", v: "Alumni Referral Link" },
+                { k: "First Visit Channel", v: "Organic Search" },
                 { k: "Latest Campaign", v: "Annual Tech Summit 2026" },
-                { k: "Community Source", v: "AI Innovators Chapter" },
-                { k: "First Landing Page", v: "Community Welcome Hub" },
+                { k: "Referral Source", v: "LinkedIn" },
+                { k: "First Landing Page", v: "Tech Summit Registration" },
               ].map((row) => (
                 <div key={row.k} className="flex items-center justify-between gap-2">
                   <dt className="text-zinc-500">{row.k}</dt>
