@@ -185,12 +185,13 @@ export function Section({
 
 export function FeatureCard({ item }: { item: Feature }) {
   return (
-    <div className="group rounded-2xl border border-[#e1e1df] bg-white p-6 transition-colors hover:border-blue-300">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+    <div className="group relative overflow-hidden rounded-2xl border border-[#e1e1df] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-[0_14px_34px_rgba(37,99,235,0.08)]">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-all duration-300 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white">
         <FeatureIcon name={item.icon} className="h-5 w-5" />
       </div>
       <h3 className="mt-5 text-base font-bold text-black">{item.title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-zinc-600">{item.body}</p>
+      <div className="absolute inset-x-0 bottom-0 h-0.5 origin-left scale-x-0 bg-gradient-to-r from-blue-600 to-sky-400 transition-transform duration-300 group-hover:scale-x-100" />
     </div>
   );
 }

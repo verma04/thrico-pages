@@ -105,3 +105,18 @@ body {
   animation: pulse-travel 18s linear infinite;
 }
 
+@keyframes fade-up-sm {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up-sm {
+  animation: fade-up-sm 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
